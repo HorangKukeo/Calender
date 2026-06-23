@@ -21,6 +21,9 @@
     <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <div id="sidebar">
+        <!-- 모바일용 닫기 버튼 추가 -->
+        <button id="close-sidebar-btn" onclick="toggleSidebar()">✕ 메뉴 닫기</button>
+        
         <div class="sidebar-section">
             <h2>👀 일정 보기 (필터)</h2>
             <select id="filter-school" onchange="handleSchoolFilterChange()">

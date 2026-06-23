@@ -97,6 +97,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         locale: 'ko',
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         buttonText: { today: '오늘', month: '월별', week: '주간', day: '일별' },
+        // ------ 바로 이 부분에 아래 한 줄을 추가합니다 ------
+        height: '100%',
+        // ------------------------------------------------
         editable: true,
         eventDurationEditable: true,
         
