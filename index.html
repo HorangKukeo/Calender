@@ -38,6 +38,11 @@
             <button onclick="openModal('studentModal')">👩‍🎓 학생 등록</button>
             <button class="primary" onclick="openModal('scheduleModal')">📅 일정 등록</button>
         </div>
+
+        <div class="sidebar-section">
+            <h2>📝 다이어리</h2>
+            <button class="secondary" onclick="openMemoListModal()" style="background: #10B981;">📝 메모장 열기</button>
+        </div>
         
         <div class="sidebar-section">
             <h2>⚙️ 데이터베이스 관리</h2>
@@ -243,6 +248,58 @@
 
             <div class="modal-buttons">
                 <button onclick="closeModal('manageDataModal')">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="memoListModal" class="modal-overlay">
+        <div class="modal">
+            <h3>📝 메모장</h3>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                <button class="primary" style="width: auto; padding: 6px 12px;" onclick="openMemoEditor()">➕ 새 메모 작성</button>
+            </div>
+            <ul id="memoListContainer" class="manage-list" style="max-height: 400px;">
+                </ul>
+            <div class="modal-buttons">
+                <button onclick="closeModal('memoListModal')">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="memoEditorModal" class="modal-overlay" style="z-index: 110;">
+        <div class="modal">
+            <h3>메모 작성 및 수정</h3>
+            <input type="hidden" id="memoId">
+            
+            <label>메모 제목</label>
+            <input type="text" id="memoTitle" placeholder="제목을 입력하세요">
+            
+            <label style="margin-top: 10px; display: block;">내용 (디자인 적용 가능)</label>
+            <div class="editor-toolbar">
+                <button type="button" onclick="execCmd('bold')" title="굵게"><b>B</b></button>
+                <button type="button" onclick="execCmd('italic')" title="기울임"><i>I</i></button>
+                <button type="button" onclick="execCmd('underline')" title="밑줄"><u>U</u></button>
+                <span class="toolbar-divider"></span>
+                <select onchange="execCmd('fontSize', this.value); this.selectedIndex=0;" style="width: auto; margin: 0; padding: 4px;">
+                    <option value="">크기</option>
+                    <option value="2">작게</option>
+                    <option value="3">보통</option>
+                    <option value="5">크게</option>
+                    <option value="6">매우 크게</option>
+                </select>
+                <div style="display: flex; align-items: center; gap: 5px; margin-left: 5px;">
+                    <span style="font-size: 13px;">색상:</span>
+                    <input type="color" onchange="execCmd('foreColor', this.value)" style="width: 28px; height: 28px; padding: 0; border: none; cursor: pointer;">
+                </div>
+            </div>
+            <div id="memoContent" class="editor-content" contenteditable="true"></div>
+            
+            <div class="modal-buttons" style="justify-content: space-between;">
+                <button id="memoDeleteBtn" class="danger" onclick="deleteMemo()" style="width: auto; display: none;">메모 삭제</button>
+                <div style="display: flex; gap: 10px; margin-left: auto;">
+                    <button onclick="closeModal('memoEditorModal')">취소</button>
+                    <button class="primary" onclick="saveMemo()">저장</button>
+                </div>
             </div>
         </div>
     </div>

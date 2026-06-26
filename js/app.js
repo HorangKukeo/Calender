@@ -4,9 +4,14 @@
 const DB_URL = "https://horangcalender-default-rtdb.firebaseio.com/data.json";
 const ADMIN_KEY = "horangsik2";
 
-let db = { schools: [], students: [], schedules: [] };
+let db = { schools: [], students: [], schedules: [], memos: [] };
 let currentFilter = { type: 'ALL', schoolId: null, studentId: null };
 let calendar;
+
+// 📱 모바일 스크롤 중 클릭(터치) 오작동 방지용 변수
+let isTouchScrolling = false;
+document.addEventListener('touchstart', () => { isTouchScrolling = false; }, { passive: true });
+document.addEventListener('touchmove', () => { isTouchScrolling = true; }, { passive: true });
 
 // 🎨 토스트(Toast) 팝업 함수
 function showToast(message) {
@@ -38,6 +43,7 @@ function toggleSidebar() {
 }
 
 // Firebase 데이터 로드
+// Firebase 데이터 로드
 async function fetchLatestData() {
     try {
         const res = await fetch(DB_URL);
@@ -46,6 +52,7 @@ async function fetchLatestData() {
             db.schools = data.schools || [];
             db.students = data.students || [];
             db.schedules = data.schedules || [];
+            db.memos = data.memos || [];
         }
         return true;
     } catch (error) {
@@ -60,6 +67,7 @@ async function saveToFirebase() {
         schools: db.schools || [],
         students: db.students || [],
         schedules: db.schedules || [],
+        memos: db.memos || [],
         adminKey: ADMIN_KEY 
     };
 
@@ -92,14 +100,13 @@ async function executeDBUpdate(action) {
 
 document.addEventListener('DOMContentLoaded', async function() {
     const calendarEl = document.getElementById('calendar');
-    calendar = new FullCalendar.Calendar(calendarEl, {
+   calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         locale: 'ko',
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         buttonText: { today: '오늘', month: '월별', week: '주간', day: '일별' },
-        // ------ 바로 이 부분에 아래 한 줄을 추가합니다 ------
-        height: '100%',
-        // ------------------------------------------------
+        // 모바일 스크롤 잘림 해결: 모바일에서는 내부 스크롤 대신 컨테이너 스크롤 활용
+        height: window.innerWidth <= 768 ? 'auto' : '100%',
         editable: true,
         eventDurationEditable: true,
         
@@ -171,6 +178,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         },
         
         dateClick: function(info) {
+            // 스크롤 중 터치가 발생한 것이면 일정 등록창 띄우기를 무시함 (오류 개선)
+            if (isTouchScrolling) return;
+
             document.getElementById('schedDate').value = info.dateStr;
             document.getElementById('schedTime').value = '';
             document.getElementById('schedMemo').value = '';
@@ -547,10 +557,12 @@ async function importData(mode) {
                 db.schools = parsed.schools || [];
                 db.students = parsed.students || [];
                 db.schedules = parsed.schedules || [];
+                db.memos = parsed.memos || [];
             } else if (mode === 'append') {
                 if(parsed.schools) parsed.schools.forEach(s => { if(!db.schools.find(x => x.id === s.id)) db.schools.push(s) });
                 if(parsed.students) parsed.students.forEach(s => { if(!db.students.find(x => x.id === s.id)) db.students.push(s) });
                 if(parsed.schedules) parsed.schedules.forEach(s => { if(!db.schedules.find(x => x.id === s.id)) db.schedules.push(s) });
+                if(parsed.memos) parsed.memos.forEach(s => { if(!db.memos.find(x => x.id === s.id)) db.memos.push(s) });
             }
         });
         closeModal('jsonImportModal');
@@ -585,4 +597,107 @@ function uploadJSONFile(event) {
         event.target.value = '';
     };
     reader.readAsText(file);
+}
+
+// ==========================================
+// 📝 메모장 (WYSIWYG) 관련 기능
+// ==========================================
+
+function openMemoListModal() {
+    const listContainer = document.getElementById('memoListContainer');
+    let memos = db.memos || [];
+    
+    // 최신 작성순 정렬
+    memos.sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+    if (memos.length === 0) {
+        listContainer.innerHTML = `<li style="justify-content: center; color: #9CA3AF;">작성된 메모가 없습니다.</li>`;
+    } else {
+        listContainer.innerHTML = memos.map(m => {
+            const dateStr = new Date(m.updatedAt || m.createdAt).toLocaleDateString('ko-KR', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+            return `
+            <li class="memo-list-item" onclick="openMemoEditor('${m.id}')">
+                <div class="memo-list-item-title">${m.title || '제목 없음'}</div>
+                <div class="memo-list-item-date">${dateStr}</div>
+            </li>`;
+        }).join('');
+    }
+    openModal('memoListModal');
+    
+    // 모바일 환경일 경우 메뉴 닫기
+    if(window.innerWidth <= 768) toggleSidebar(); 
+}
+
+function openMemoEditor(memoId = null) {
+    document.getElementById('memoId').value = memoId || '';
+    document.getElementById('memoTitle').value = '';
+    document.getElementById('memoContent').innerHTML = '';
+    
+    const deleteBtn = document.getElementById('memoDeleteBtn');
+
+    if (memoId) {
+        const memo = (db.memos || []).find(m => m.id === memoId);
+        if (memo) {
+            document.getElementById('memoTitle').value = memo.title;
+            document.getElementById('memoContent').innerHTML = memo.content;
+            deleteBtn.style.display = 'block';
+        }
+    } else {
+        deleteBtn.style.display = 'none';
+    }
+    
+    openModal('memoEditorModal');
+}
+
+// 위지윅 에디터 명령어 실행기
+function execCmd(command, value = null) {
+    document.getElementById('memoContent').focus();
+    document.execCommand(command, false, value);
+}
+
+async function saveMemo() {
+    const id = document.getElementById('memoId').value;
+    const title = document.getElementById('memoTitle').value.trim();
+    const content = document.getElementById('memoContent').innerHTML;
+    
+    if (!title && !content) return alert('제목이나 내용을 입력해주세요.');
+
+    await executeDBUpdate(() => {
+        if (!db.memos) db.memos = [];
+        const now = new Date().toISOString();
+
+        if (id) {
+            const memo = db.memos.find(m => m.id === id);
+            if (memo) {
+                memo.title = title || '제목 없음';
+                memo.content = content;
+                memo.updatedAt = now;
+            }
+        } else {
+            db.memos.push({
+                id: generateId(),
+                title: title || '제목 없음',
+                content: content,
+                createdAt: now,
+                updatedAt: now
+            });
+        }
+    });
+
+    showToast("메모가 저장되었습니다.");
+    closeModal('memoEditorModal');
+    openMemoListModal(); // 리스트 갱신
+}
+
+async function deleteMemo() {
+    if (!confirm("이 메모를 정말 삭제하시겠습니까?")) return;
+    
+    const id = document.getElementById('memoId').value;
+    await executeDBUpdate(() => {
+        db.memos = (db.memos || []).filter(m => m.id !== id);
+    });
+
+    showToast("메모가 삭제되었습니다.");
+    closeModal('memoEditorModal');
+    openMemoListModal(); // 리스트 갱신
 }

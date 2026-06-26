@@ -1,5 +1,5 @@
 :root { --primary: #4F46E5; --border: #E5E7EB; --bg: #F9FAFB; }
-body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; display: flex; height: 100vh; background-color: var(--bg); overflow: hidden; }
+body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; display: flex; height: 100dvh; background-color: var(--bg); overflow: hidden; }
 
 /* 모바일 전용 헤더 */
 #mobile-header { display: none; background: white; padding: 15px; border-bottom: 1px solid var(--border); justify-content: space-between; align-items: center; z-index: 20; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -63,6 +63,18 @@ select:disabled { background-color: #F3F4F6; cursor: not-allowed; }
 .event-pending { border-style: dashed !important; border-width: 2px !important; }
 .event-important { font-weight: bold; border-width: 2px !important; border-color: #EF4444 !important;}
 
+/* 메모장 에디터 CSS */
+.editor-toolbar { display: flex; flex-wrap: wrap; gap: 5px; background: #F3F4F6; padding: 8px; border: 1px solid var(--border); border-bottom: none; border-radius: 4px 4px 0 0; align-items: center; }
+.editor-toolbar button { width: auto; margin: 0; padding: 4px 10px; font-size: 14px; background: white; border: 1px solid #D1D5DB; border-radius: 4px; cursor: pointer; color: #374151; }
+.editor-toolbar button:hover { background: #E5E7EB; }
+.toolbar-divider { width: 1px; height: 20px; background: #D1D5DB; margin: 0 5px; }
+.editor-content { min-height: 150px; max-height: 300px; overflow-y: auto; padding: 12px; border: 1px solid var(--border); border-radius: 0 0 4px 4px; font-size: 14px; background: white; outline: none; }
+.editor-content:focus { border-color: var(--primary); }
+.memo-list-item { flex-direction: column !important; align-items: flex-start !important; cursor: pointer; transition: background 0.2s; }
+.memo-list-item:hover { background: #EEF2FF; }
+.memo-list-item-title { font-weight: bold; color: var(--primary); margin-bottom: 4px; font-size: 14px;}
+.memo-list-item-date { font-size: 11px; color: #9CA3AF; }
+
 /* 반응형 (모바일) CSS */
 @media (max-width: 768px) {
     body { flex-direction: column; }
@@ -85,8 +97,8 @@ select:disabled { background-color: #F3F4F6; cursor: not-allowed; }
         padding: 12px; 
     }
     
-    /* 달력이 화면 밖으로 길어지지 않게 고정 */
-    #calendar-container { padding: 5px; flex: 1; min-height: 0; box-sizing: border-box; overflow: hidden; }
+    /* 달력이 길어지면 부모 컨테이너에서 스크롤 되도록 허용 (스크롤 잘림 오류 수정) */
+    #calendar-container { padding: 5px; flex: 1; min-height: 0; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; }
     
     /* 모바일 달력 상단 툴바(버튼, 글씨) 크기 축소 */
     .fc .fc-toolbar { flex-direction: row; flex-wrap: wrap; justify-content: space-between; gap: 5px; margin-bottom: 8px !important; }
